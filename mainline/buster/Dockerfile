@@ -2,8 +2,8 @@ FROM debian:buster-slim
 
 LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
 
-ENV NGINX_VERSION   1.17.9
-ENV NJS_VERSION     0.3.9
+ENV NGINX_VERSION   1.17.10
+ENV NJS_VERSION     0.4.0
 ENV PKG_RELEASE     1~buster
 
 RUN set -x \
@@ -84,7 +84,8 @@ RUN set -x \
     && apt-get install --no-install-recommends --no-install-suggests -y \
                         $nginxPackages \
                         gettext-base \
-    && apt-get remove --purge --auto-remove -y ca-certificates && rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/nginx.list \
+                        curl \
+    && apt-get remove --purge --auto-remove -y && rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/nginx.list \
     \
 # if we have leftovers from building, let's purge them (including extra, unnecessary build deps)
     && if [ -n "$tempDir" ]; then \
@@ -95,6 +96,10 @@ RUN set -x \
 # forward request and error logs to docker log collector
 RUN ln -sf /dev/stdout /var/log/nginx/access.log \
     && ln -sf /dev/stderr /var/log/nginx/error.log
+
+# make default server listen on ipv6
+RUN sed -i -E 's,listen       80;,listen       80;\n    listen  [::]:80;,' \
+        /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
